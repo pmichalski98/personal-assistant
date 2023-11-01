@@ -2,24 +2,53 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { ChatBubbleIcon } from "@radix-ui/react-icons";
-import { SendIcon } from "lucide-react";
+import { useState } from "react";
 
 //e: MouseEvent<HTMLButtonElement, MouseEvent>
-async function handleClick(e: MouseEvent) {
-  // const button = document.querySelector("#voice");
-  const button = e.currentTarget;
-  if (!button) return;
-  console.log(e.currentTarget);
-
-  button.addEventListener("click", async () => {
-    await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
-  });
-}
 
 export default function Home() {
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  // async function getTranscript() {
+  //   if (!blob) return;
+  //   const loader = new OpenAIWhisperAudio(blob);
+
+  //   const docs = await loader.load();
+
+  //   console.log(docs);
+  // }
+
+  async function startRecording() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+    setStream(stream);
+    const mediaRecorder = new MediaRecorder(stream);
+    setRecorder(mediaRecorder);
+    mediaRecorder.start();
+
+    const chunks: Blob[] = [];
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "audio/webm" });
+      setBlob(blob);
+      const blobUrl = URL.createObjectURL(blob);
+      setBlobUrl(blobUrl);
+    };
+  }
+
+  function stopRecording() {
+    if (recorder) {
+      recorder.stop();
+      recorder.stream.getTracks().map((track) => track.stop());
+    }
+  }
+
   return (
     <main className="p-14 justify-center min-h-screen text-xl flex">
       <div className="w-full ">
@@ -28,16 +57,25 @@ export default function Home() {
           <h2>Chat</h2>
           <Separator className="flex-1/3" />
         </div>
-        <div className="h-1/3"></div>
+        <div className="h-1/3">
+          {blobUrl && (
+            <audio controls>
+              {" "}
+              <source src={blobUrl} type="audio/mpeg" />
+            </audio>
+          )}
+        </div>
         <div className="flex items-center relative">
           <Input placeholder="Ask me anything..." className="" />
-          <Button
-            onClick={(e) => handleClick(e)}
+          <Button onClick={startRecording}>Start</Button>
+          <Button onClick={stopRecording}>Stop</Button>
+          {/* <Button
+            // onClick={(e) => handleClick(e)}
             size="icon"
             className="absolute top-0 right-0"
           >
             <SendIcon />
-          </Button>
+          </Button> */}
         </div>
       </div>
     </main>
