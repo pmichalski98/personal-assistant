@@ -2,9 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Mic, SendIcon } from "lucide-react";
 import { useState } from "react";
-
-//e: MouseEvent<HTMLButtonElement, MouseEvent>
+import { OpenAIWhisperAudio } from "langchain/document_loaders/fs/openai_whisper_audio";
 
 export default function Home() {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -20,6 +20,16 @@ export default function Home() {
 
   //   console.log(docs);
   // }
+
+  async function whisper() {
+    // const filePath = "./data/testaudio.mp3";
+
+    const loader = new OpenAIWhisperAudio(blob!);
+
+    const docs = await loader.load();
+
+    return docs[0].pageContent;
+  }
 
   async function startRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -46,6 +56,8 @@ export default function Home() {
     if (recorder) {
       recorder.stop();
       recorder.stream.getTracks().map((track) => track.stop());
+      const text = whisper();
+      console.log(text);
     }
   }
 
@@ -67,15 +79,20 @@ export default function Home() {
         </div>
         <div className="flex items-center relative">
           <Input placeholder="Ask me anything..." className="" />
-          <Button onClick={startRecording}>Start</Button>
-          <Button onClick={stopRecording}>Stop</Button>
-          {/* <Button
-            // onClick={(e) => handleClick(e)}
-            size="icon"
-            className="absolute top-0 right-0"
-          >
-            <SendIcon />
-          </Button> */}
+          <div className="absolute top-0 flex justify-center items-center space-x-3 right-0">
+            <button
+              className="text-slate-400 hover:text-slate-600"
+              onClick={startRecording}
+            >
+              <Mic size="20" />
+            </button>
+            <Button
+              // onClick={(e) => handleClick(e)}
+              size="icon"
+            >
+              <SendIcon />
+            </Button>
+          </div>
         </div>
       </div>
     </main>
