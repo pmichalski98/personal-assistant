@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -7,23 +8,36 @@ import { FormEvent, useState } from "react";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
+  const [conversation, setConversation] = useState<string>();
 
   async function handleSubmit(e: FormEvent) {
+    const URL = "http://localhost:3002";
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:3001/test", {
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      const res = await fetch(`${URL}/chat`, {
         method: "POST",
         body: JSON.stringify({
-          test: prompt,
+          query: prompt,
         }),
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers,
       });
-      const textRes = await res.json();
-      console.log(textRes);
-      setPrompt("");
+      const reader = res.body?.getReader();
+      while (true) {
+        const chunk = await reader?.read();
+        const { done, value } = chunk!;
+        if (done) {
+          break;
+        }
+        const decoder = new TextDecoder("utf-8");
+        const decodedChunk = decoder.decode(value);
+        const lines = decodedChunk.split("\n");
+        setConversation((prev) => prev + lines[0]);
+        console.log(lines);
+      }
     } catch (e) {
       console.log(e);
     }
@@ -37,7 +51,14 @@ export default function Home() {
           <h2>Chat</h2>
           <Separator className="flex-1/3" />
         </div>
-        <div className="h-2/3"></div>
+
+        <div className="h-2/3">
+          {conversation}
+          {/*{conversation &&*/}
+          {/*  conversation.map((message) => {*/}
+          {/*    return <div key={message}>{message}</div>;*/}
+          {/*  })}*/}
+        </div>
         <form onSubmit={handleSubmit} className="flex items-center relative">
           <Input
             value={prompt}
