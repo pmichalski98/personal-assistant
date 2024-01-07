@@ -6,6 +6,7 @@ import React, { FormEvent, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import ChatHeader from "@/components/ChatHeader";
 import PromptInput from "@/app/PromptInput";
+import ReactMarkdown from "react-markdown";
 
 interface ConversationT {
   id: number;
@@ -75,9 +76,9 @@ export default function Home() {
                       <h2 className="font-bold">
                         {message.role === "assistant" ? "Assistant" : "You"}
                       </h2>
-                      <p className="font-light text-slate-300/90">
+                      <ReactMarkdown className=" text-slate-300/90">
                         {message.content}
-                      </p>
+                      </ReactMarkdown>
                     </div>
                   )}
                 </div>
@@ -86,7 +87,7 @@ export default function Home() {
           {conversation.length > 0 && (
             <div className="py-4">
               <h2 className="font-semibold">Assistant</h2>
-              <p className="font-light text-slate-300/90">{gptResponse}</p>
+              <p className=" text-slate-300/90">{gptResponse}</p>
             </div>
           )}
           {errorMsg && (
